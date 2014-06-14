@@ -1,0 +1,6 @@
+{
+	"instance":"testdescriptor",
+	"type":"BasicConfigModEntry",
+	"name":"Like stock but with a config set",
+	"config":"febzone.cfg"
+}

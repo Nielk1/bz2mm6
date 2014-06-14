@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using MM6.ModSys;
 
 namespace mm6_controls.Data
 {
-    public delegate void FilenameChanged(string oldFilename, string newFilename);
+    public delegate void IDChanged(string oldId, string newId);
     public interface GameInstance
     {
-        string filename { get; }
+        string ID { get; }
         string GetTitle();
         ListViewGroup GetListViewGroup();
 
@@ -22,10 +23,12 @@ namespace mm6_controls.Data
             Version = Version.Parse("0.0.0.0");
         }*/
 
-        event FilenameChanged filenameChanged;
+        event IDChanged idChanged;
 
         ListViewItem[] GetListItems();
 
-        void ChangeFilename(string newFilename);
+        void ChangeFilename(string newId);
+
+        void AddModEntry(ModEntry tmpModEntry);
     }
 }

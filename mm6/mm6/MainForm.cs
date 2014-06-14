@@ -14,44 +14,12 @@ using mm6_controls.Controls;
 using System.Threading;
 using mm6_controls.Data;
 using MM6.ModSys;
+using Newtonsoft.Json.Linq;
 
 namespace mm6
 {
     public partial class MainForm : Form
     {
-        class IconCollection
-        {
-            public Dictionary<string, IconDescriptor> IconPacks { get; private set; }
-
-            public ImageList LargeIcons { get; private set; }
-            public ImageList SmallIcons { get; private set; }
-
-            public IconCollection()
-            {
-                IconPacks = new Dictionary<string,IconDescriptor>();
-
-                LargeIcons = new ImageList();
-                SmallIcons = new ImageList();
-                LargeIcons.ImageSize = new Size(48, 48);
-                SmallIcons.ImageSize = new Size(16, 16);
-            }
-
-            public void AddPackFromJSON(string data)
-            {
-                IconDescriptor icons = JsonConvert.DeserializeObject<IconDescriptor>(data);
-                icons.LoadIcons();
-                icons.IconSet.ToList().ForEach(dr =>
-                {
-                    LargeIcons.Images.Add(icons.Package + @"/" + dr.Key, dr.Value[48]);
-                    SmallIcons.Images.Add(icons.Package + @"/" + dr.Key, dr.Value[16]);
-                });
-                IconPacks.Add(icons.Package, icons);
-            }
-        }
-
-        IconCollection iconCollection;
-
-
         QueuedBackgroundWorker BackgroundTaskWorker;
         GameLaunchListModel GameLaunchData;
 
@@ -60,7 +28,7 @@ namespace mm6
             InitializeComponent();
             splitContainerLaunchTab.Panel2Collapsed = true;
 
-            iconCollection = new IconCollection();
+            //iconCollection = new IconCollection();
 
             {
                 var asmData = System.Reflection.Assembly.GetExecutingAssembly().GetName();
@@ -76,7 +44,7 @@ namespace mm6
 
         private void LoadData()
         {
-            BackgroundTaskWorker.RunAsync(
+            /*BackgroundTaskWorker.RunAsync(
                 (obj, args) =>
                 {
                     ((BackgroundWorker)obj).ReportProgress(0);
@@ -103,13 +71,13 @@ namespace mm6
                     toolStripProgressBar.Value = args.ProgressPercentage;
                     toolStripProgressBar.Visible = true;
                 }
-            );
+            );*/
 
             BackgroundTaskWorker.RunAsync(
                 (obj, args) =>
                 {
                     ((BackgroundWorker)obj).ReportProgress(0);
-                    string[] files = Directory.GetFiles("./Data/Instances/").Where(file => Path.GetExtension(file).ToLowerInvariant() == ".json").ToArray();
+                    string[] files = Directory.GetFiles("./data/instances/").Where(file => Path.GetExtension(file).ToLowerInvariant() == ".json").ToArray();
                     int count = files.Length;
                     for (int x = 0; x < count; x++)
                     {
@@ -129,11 +97,48 @@ namespace mm6
                     toolStripStatusLabel.Text = "OK";
                     toolStripProgressBar.Visible = false;
                     toolStripProgressBar.Value = 0;
-                    DoneLoading();
                 },
                 (obj, args) =>
                 {
                     toolStripStatusLabel.Text = "Loading Instances";
+                    toolStripProgressBar.Value = args.ProgressPercentage;
+                    toolStripProgressBar.Visible = true;
+                }
+            );
+
+            BackgroundTaskWorker.RunAsync(
+                (obj, args) =>
+                {
+                    ((BackgroundWorker)obj).ReportProgress(0);
+                    string[] files = Directory.GetFiles("./data/modentrys/").Where(file => Path.GetExtension(file).ToLowerInvariant() == ".json").ToArray();
+                    int count = files.Length;
+                    for (int x = 0; x < count; x++)
+                    {
+                        ((BackgroundWorker)obj).ReportProgress(x * 100 / count);
+                        ModEntry tmpModEntry = Factories.MakeModEntry(files[x]);
+                        if (tmpModEntry != null)
+                        {
+                            GameInstance tmpInstance = GameLaunchData.GetInstanceByName(tmpModEntry.InstanceId);
+                            if (tmpInstance != null)
+                            {
+                                tmpInstance.AddModEntry(tmpModEntry);
+                            }
+                        }
+                        ((BackgroundWorker)obj).ReportProgress((x + 1) * 100 / count);
+                    }
+                    ((BackgroundWorker)obj).ReportProgress(100);
+                    Thread.Sleep(1000);
+                },
+                (obj, args) =>
+                {
+                    toolStripStatusLabel.Text = "OK";
+                    toolStripProgressBar.Visible = false;
+                    toolStripProgressBar.Value = 0;
+                    DoneLoading();
+                },
+                (obj, args) =>
+                {
+                    toolStripStatusLabel.Text = "Loading Mods";
                     toolStripProgressBar.Value = args.ProgressPercentage;
                     toolStripProgressBar.Visible = true;
                 }
@@ -156,42 +161,7 @@ namespace mm6
 
         private void LoadSettingsAndData()
         {
-            /*GameInstance testInstance = BasicGameInstance.Make();
-            GameInstance testInstance2 = BasicGameInstance.Make();
-            GameLaunchData.AddGameInstance(testInstance);
-            GameLaunchData.AddGameInstance(testInstance2);*/
             listViewLaunch.bind();
-
-            //listViewIcons.Groups.AddRange(iconCollection.IconPacks.Values.Select(dr => new ListViewGroup(dr.Package, dr.Name)).ToArray());
-            //iconCollection.IconPacks.ToList().ForEach(package =>
-            //{
-            //    listViewIcons.Items.AddRange(package.Value.IconSet.Select(dr => new ListViewItem(dr.Key, package.Value.Package + @"/" + dr.Key, listViewIcons.Groups[package.Value.Package])).ToArray());
-            //});
-
-            //listViewLaunch.LargeImageList = iconCollection.LargeIcons;
-            //listViewIcons.LargeImageList = iconCollection.LargeIcons;
-
-            /*ListViewGroup g1 = new ListViewGroup("bz2_1.3_private","Battlezone II 1.3 Private Beta");
-            ListViewGroup g2 = new ListViewGroup("bz2_1.3.6.4","Battlezone II 1.3.6.4");
-            ListViewGroup g3 = new ListViewGroup("bz2_mod_qf","Battlezone II - QF Mod");*/
-
-            //images.Images.Add("bz2", System.Drawing.SystemIcons.Information);
-
-            /*listViewLaunch.Items.Clear();
-            listViewLaunch.Groups.Clear();
-            //listViewLaunch.LargeImageList = images;
-
-            listViewLaunch.Groups.Add(g1);
-            listViewLaunch.Groups.Add(g2);
-            listViewLaunch.Groups.Add(g3);
-
-            listViewLaunch.Items.Add(new ListViewItem("Private Beta [Auto Updated]", "nielk1_pack_1/bzone.ico", g1));
-            listViewLaunch.Items.Add(new ListViewItem("Battlezone II", "bz2", g2));
-            listViewLaunch.Items.Add(new ListViewItem("Forgotten Enemies", "bz2", g2));
-            listViewLaunch.Items.Add(new ListViewItem("QF", "bz2", g2));
-            listViewLaunch.Items.Add(new ListViewItem("Uler", "bz2", g2));
-            listViewLaunch.Items.Add(new ListViewItem("Legacy of Ashes", "bz2", g2));
-            listViewLaunch.Items.Add(new ListViewItem("QF2", "bz2", g3));*/
         }
 
 

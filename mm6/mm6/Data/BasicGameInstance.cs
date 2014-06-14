@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.IO;
+using MM6.ModSys;
 
 namespace mm6_controls.Data
 {
     public class BasicGameInstance : GameInstance
     {
-        public event FilenameChanged filenameChanged;
+        public event IDChanged idChanged;
 
         private string _Name;
 
@@ -21,15 +23,17 @@ namespace mm6_controls.Data
                 Group.Header = _Name;
             }
         }
-        public string filename { get { return _filename; } }
-        private string _filename;
+        public string ID { get { return _ID; } }
+        private string _ID;
         private ListViewGroup Group;
+        private List<ModEntry> ModEntries;
 
         public BasicGameInstance(string filename)
         {
-            this._filename = filename;
+            this._ID = Path.GetFileNameWithoutExtension(filename);
             this._Name = Guid.NewGuid().ToString();
             this.Group = new ListViewGroup(GetTitle());
+            this.ModEntries = new List<ModEntry>();
         }
 
         public string GetTitle()
@@ -45,13 +49,24 @@ namespace mm6_controls.Data
 
         public ListViewItem[] GetListItems()
         {
-            return (new List<string>() { "", "Dummy2", "Dummy3" }).Select(dr => new ListViewItem(dr, Group)).ToArray();
+            if (ModEntries.Count > 0)
+            {
+                return ModEntries.Select(dr => dr.GetListViewItem()).ToArray();
+            }
+            return (new List<string>() { "" }).Select(dr => new ListViewItem(dr, Group)).ToArray();
         }
 
-        public void ChangeFilename(string newFilename)
+        public void ChangeFilename(string newId)
         {
-            _filename = newFilename;
-            filenameChanged(filename, newFilename);
+            _ID = newId;
+            idChanged(ID, newId);
+        }
+
+
+        public void AddModEntry(ModEntry tmpModEntry)
+        {
+            tmpModEntry.GetListViewItem().Group = GetListViewGroup();
+            ModEntries.Add(tmpModEntry);
         }
     }
 }

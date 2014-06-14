@@ -31,8 +31,13 @@ namespace mm6_controls.Data
 
         public void AddGameInstance(GameInstance NewInstance)
         {
-            gameInstances.Add(NewInstance.filename, NewInstance);
-            NewInstance.filenameChanged += InstanceFilenameChanged;
+            gameInstances.Add(NewInstance.ID, NewInstance);
+            NewInstance.idChanged += InstanceFilenameChanged;
+        }
+
+        public GameInstance GetInstanceByName(string key)
+        {
+            return gameInstances[key];
         }
     }
 }
